@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <iomanip>
 
 using namespace std;
 
@@ -30,11 +31,12 @@ class Accounts{
         }
 
         void displayDetails(){
-            cout << "Account Details for " << getAccountType() << " Account (ID: " << getNumber() << "):" << endl;
-            cout << "   Holder: " << getHolder() << endl;
-            cout << "   Balance: $" << getBalance() << endl;
+            cout << *this;
+            //cout << "Account Details for " << getAccountType() << " Account (ID: " << getNumber() << "):" << endl;
+            //cout << "   Holder: " << getHolder() << endl;
+            //cout << "   Balance: $" << getBalance() << endl;
         }
-        
+
         void deposit(double amount){
             accountBalance += amount;
         }
@@ -49,21 +51,19 @@ class Accounts{
             }
         }
 
-        friend ostream& operator<<(ostream& os, const Accounts& acc) {
-        os << "Account Details for " << acc.getAccountType() << " (ID: " << acc.accountNumber << "):" << endl;
-        os << "   Holder: " << acc.accountHolder << endl;
-        os << "   Balance: $" <<  acc.accountBalance << endl;
-        return os;
+        friend ostream &operator<<(ostream& COUT, Accounts& acc) {
+            COUT << "Account Details for " << acc.getAccountType() << " Account (ID: " << acc.accountNumber << "):" << endl;
+            COUT << "   Holder: " << acc.accountHolder << endl;
+            COUT << "   Balance: $" << fixed << setprecision(2) << acc.accountBalance << endl;
+            return COUT;
+        }
+        
+        friend void operator+(Accounts &toAccount, Accounts &fromAccount){
+            double transferAmount = 300;
+            fromAccount.withdrawal(transferAmount);
+            toAccount.deposit(transferAmount);
         }
 };
-
-
-Accounts operator+(Accounts &toAccount, Accounts &fromAccount){
-    double transferAmount = 300;
-    fromAccount.withdrawal(transferAmount);
-    toAccount.deposit(transferAmount);
-    return toAccount;
-}
 
 
 class SavingsAccount: public Accounts{
@@ -72,15 +72,20 @@ class SavingsAccount: public Accounts{
 
     public:
         SavingsAccount(string number, string holder, double balance, double interest)
-            : Accounts(number, holder, balance), interestRate(interest){}
+            : Accounts(number, holder, balance), interestRate(interest * 100){}
 
         string getAccountType() const override{
-            return "Saving";
+            return "Savings";
+        }
+
+        double getInterestRate() {
+            return interestRate;
         }
 
         void displayDetails(){
-            Accounts::displayDetails();
-            cout << "   Interest Rate: " << interestRate << "%" << endl << endl;
+            //Accounts::displayDetails();
+            cout << *this;
+            cout << "   Interest Rate: " << fixed << setprecision(2) << interestRate << "%" << endl << endl;
         }
 
         void withdrawal(double amount){
@@ -92,6 +97,12 @@ class SavingsAccount: public Accounts{
                 cout << "Insufficient Funds. Minimum balance is $" << accountMinimum << "." << endl;
             }
         }
+
+        //friend ostream &operator<<(ostream& COUT, SavingsAccount& acc) {
+            //COUT << static_cast<Accounts&>(acc);
+            //COUT << "   Interest Rate: " << acc.interestRate << "%" << endl;
+            //return COUT;
+        //}
 };
 
 class CurrentAccount : public Accounts{
@@ -107,9 +118,11 @@ class CurrentAccount : public Accounts{
         }
 
         void displayDetails(){
-            Accounts::displayDetails();
-            cout << "   Overdraft Limit: $" << overdraftLimit << endl << endl;
+            //Accounts::displayDetails();
+            cout << *this;
+            cout << "   Overdraft Limit: $" << fixed << setprecision(2) << overdraftLimit << endl << endl;
         }
+        
         void withdrawal(double amount){
             if (amount > 0 && accountBalance - amount >= -overdraftLimit){
                 accountBalance -= amount;
@@ -118,6 +131,12 @@ class CurrentAccount : public Accounts{
                 cout << "Insufficient funds. Overdrafting limit is " << overdraftLimit << "." << endl;
             }
         }
+
+        //friend ostream &operator<<(ostream& COUT, CurrentAccount& acc) {
+        //    COUT << static_cast<Accounts&>(acc);
+        //    COUT << "   Overdraft Limit: " << acc.overdraftLimit << "%" << endl;
+        //    return COUT;
+        //}
 };  
 
 int main(){
