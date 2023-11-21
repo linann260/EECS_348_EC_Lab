@@ -41,13 +41,15 @@ class Accounts{
             accountBalance += amount;
         }
 
-        void withdrawal(double amount){
+        bool withdrawal(double amount){
             if (amount > 0 && amount <= accountBalance){
                 accountBalance -= amount;
+                return true;
             }
 
             else {
-                cout << "Insufficient funds." << endl;
+                cout << "Account has insufficient funds." << endl;
+                return false;
             }
         }
 
@@ -56,12 +58,6 @@ class Accounts{
             COUT << "   Holder: " << acc.accountHolder << endl;
             COUT << "   Balance: $" << fixed << setprecision(2) << acc.accountBalance << endl;
             return COUT;
-        }
-        
-        friend void operator+(Accounts &toAccount, Accounts &fromAccount){
-            double transferAmount = 300;
-            fromAccount.withdrawal(transferAmount);
-            toAccount.deposit(transferAmount);
         }
 };
 
@@ -74,6 +70,8 @@ class SavingsAccount: public Accounts{
         SavingsAccount(string number, string holder, double balance, double interest)
             : Accounts(number, holder, balance), interestRate(interest * 100){}
 
+        double accountMinimum = 100;
+
         string getAccountType() const override{
             return "Savings";
         }
@@ -83,30 +81,36 @@ class SavingsAccount: public Accounts{
         }
 
         void displayDetails(){
-            //Accounts::displayDetails();
             cout << *this;
             cout << "   Interest Rate: " << fixed << setprecision(2) << interestRate << "%" << endl << endl;
         }
 
-        void withdrawal(double amount){
-            double accountMinimum = 100;
+        bool withdrawal(double amount){
             if (amount > 0 && accountBalance - amount >= accountMinimum){
                 accountBalance -= amount;
+                return true;
             }
             else{
-                cout << "Insufficient Funds. Minimum balance is $" << accountMinimum << "." << endl;
+                cout << "Savings had insufficient Funds. Minimum balance is $" << accountMinimum << "." << endl;
+                return false;
             }
         }
 
-        //friend ostream &operator<<(ostream& COUT, SavingsAccount& acc) {
-            //COUT << static_cast<Accounts&>(acc);
-            //COUT << "   Interest Rate: " << acc.interestRate << "%" << endl;
-            //return COUT;
-        //}
+        SavingsAccount operator+(Accounts &other){
+            double transfer = 300;
+            if (other.withdrawal(transfer)){
+                accountBalance += 300;
+                return (*this);
+            }
+
+            else{
+                return (*this);
+            }
+        }
 };
 
 class CurrentAccount : public Accounts{
-    private:
+    protected:
         double overdraftLimit;
 
     public:
@@ -118,25 +122,32 @@ class CurrentAccount : public Accounts{
         }
 
         void displayDetails(){
-            //Accounts::displayDetails();
             cout << *this;
             cout << "   Overdraft Limit: $" << fixed << setprecision(2) << overdraftLimit << endl << endl;
         }
         
-        void withdrawal(double amount){
+        bool withdrawal(double amount){
             if (amount > 0 && accountBalance - amount >= -overdraftLimit){
                 accountBalance -= amount;
+                return true;
             }
             else{
-                cout << "Insufficient funds. Overdrafting limit is " << overdraftLimit << "." << endl;
+                cout << "Current has insufficient funds. Overdrafting limit is " << overdraftLimit << "." << endl;
+                return false;
             }
         }
 
-        //friend ostream &operator<<(ostream& COUT, CurrentAccount& acc) {
-        //    COUT << static_cast<Accounts&>(acc);
-        //    COUT << "   Overdraft Limit: " << acc.overdraftLimit << "%" << endl;
-        //    return COUT;
-        //}
+        CurrentAccount operator+(Accounts &other){
+            double transfer = 300;
+            if (other.withdrawal(transfer)){
+                accountBalance += 300;
+                return (*this);
+            }
+
+            else{
+                return (*this);
+            }
+        }
 };  
 
 int main(){
@@ -153,7 +164,7 @@ int main(){
     savings.displayDetails();
     current.displayDetails();
 
-    current + savings;
+    savings = savings + current;
 
     cout << "Account Details after transfer:" << endl;
     savings.displayDetails();
